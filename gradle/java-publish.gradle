@@ -1,25 +1,29 @@
 apply plugin: 'maven-publish'
 
 // 强制 Java/JavaDoc 等的编码为 UTF-8
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
 }
 
-tasks.withType(Javadoc) {
+tasks.withType(Javadoc).configureEach {
     options.encoding = "UTF-8"
 }
 
 def javadocJar = task("javadocJarLocal", type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
 def sourcesJar = task("sourcesJarLocal", type: Jar) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.java.srcDirs
 }
 
 publishing {
+    repositories {
+        maven { url uri("../repo") }
+    }
+
     publications {
         Component(MavenPublication) {
             from components.java
