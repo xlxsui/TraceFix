@@ -1,4 +1,4 @@
 rootProject.name = 'TraceFix'
 //include ':android-systrace-sample-remote-debug'
-include ':android-systrace-sample-local-debug'
+//include ':android-systrace-sample-local-debug'
 include ':android-systrace-plugin'

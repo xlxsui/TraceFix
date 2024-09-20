@@ -25,13 +25,14 @@ android {
 
 buildscript {
     repositories {
+        maven { url uri('../repo')}
         mavenLocal()
         maven { url 'http://maven.aliyun.com/nexus/content/repositories/google' }
         maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
     }
 
     dependencies {
-        classpath("io.github.gracker:TraceFix:${TRACEFIX_VERSION_DEBUG}") { changing = true }
+        classpath("com.immomo.mmutil:TraceFix:${TRACEFIX_VERSION_DEBUG}") { changing = true }
     }
 }
 

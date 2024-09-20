@@ -1,6 +1,6 @@
 if (project.hasProperty("android")) { // Android libraries
     task sourcesJar(type: Jar) {
-        classifier = 'sources'
+        archiveClassifier = 'sources'
         from android.sourceSets.main.java.srcDirs
     }
 
@@ -14,7 +14,7 @@ if (project.hasProperty("android")) { // Android libraries
     }
 } else { // Java libraries
     task sourcesJar(type: Jar, dependsOn: classes) {
-        classifier = 'sources'
+        archiveClassifier = 'sources'
         from sourceSets.main.allSource
     }
 }
@@ -29,7 +29,7 @@ tasks.withType(Javadoc) {
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.destinationDir
 }
 
@@ -40,14 +40,14 @@ artifacts {
 }
 
 apply plugin: 'maven'
-apply plugin: 'signing'
 
+def getRepositoryUsername() {
+    return hasProperty('NEXUS_USERNAME') ? NEXUS_USERNAME : ""
+}
 
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-
-def ossrhUsername = properties.getProperty("ossrhUsername")
-def ossrhPassword = properties.getProperty("ossrhPassword")
+def getRepositoryPassword() {
+    return hasProperty('NEXUS_PASSWORD') ? NEXUS_PASSWORD : ""
+}
 
 def PUBLISH_GROUP_ID = publishedGroupId //这里可以不是直接申请时候的groupId只要开头是就可以
 
@@ -55,59 +55,36 @@ def PUBLISH_ARTIFACT_ID = artifact
 
 def PUBLISH_VERSION = libraryVersion // android.defaultConfig.versionName //这个是直接获取的库gradle里配置好的版本号，不用到处修改版本号，只需要维护一份就可以。
 
-//签名
-signing {
-    required { gradle.taskGraph.hasTask("uploadArchives") }
-    sign configurations.archives
-}
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
 
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+/****使用maven构建****/
 
-            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.groupId = PUBLISH_GROUP_ID
-            pom.artifactId = PUBLISH_ARTIFACT_ID
-            pom.version = PUBLISH_VERSION
-
-            pom.project {
-                packaging 'aar' //我这里发布的是安卓的包，所有写的aar
-
-                name libraryName // '发布库的简单名称'
-                // optionally artifactId can be defined here
-                description libraryDescription // '发布包的描述'
-                url siteUrl // '可以写公司官网地址或github个人页面地址'
-
-                scm {
-                    connection gitUrl // 'scm:替换成项目git地址'
-                    developerConnection gitUrl // 'scm:替换为git开头的项目地址'
-                    url siteUrl // '项目首页，可以是github项目的主页'
-                }
-
-                licenses {
-                    license {
-                        name licenseName // 'The Apache License, Version 2.0'
-                        url licenseUrl // 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id developerId // '这里填写申请账号时候的全名就可以'
-                        name developerName // '这里随意填写就可以'
-                        email developerEmail// '最好是申请账号时用的邮箱'
-                    }
-                }
+afterEvaluate { project ->
+    uploadArchives {
+        // 本地目录仓库测试
+        repositories {
+            mavenDeployer {
+                pom.groupId = PUBLISH_GROUP_ID
+                pom.artifactId = PUBLISH_ARTIFACT_ID
+                pom.version = PUBLISH_VERSION
+                repository(url: uri("../repo"))
             }
         }
+
+//        repositories {
+//            mavenDeployer {
+//                pom.groupId = PUBLISH_GROUP_ID
+//                pom.artifactId = PUBLISH_ARTIFACT_ID
+//                pom.version = PUBLISH_VERSION
+//
+//
+//                repository(url: FRAMEWORK_RELEASE_REPOSITORY_URL) {
+//                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+//                }
+//                snapshotRepository(url: FRAMEWORK_SPAPSHOT_REPOSITORY_URL) {
+//                    authentication(userName: getRepositoryUsername(), password: getRepositoryPassword())
+//                }
+//            }
+//        }
     }
 }
